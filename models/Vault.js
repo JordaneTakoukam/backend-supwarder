@@ -14,6 +14,10 @@ const VaultSchema = new Schema(
     },
     sharedWith: [
       {
+        email: {
+          type: String,
+          required: true,
+        },
         user: {
           type: Schema.Types.ObjectId,
           ref: "User",
