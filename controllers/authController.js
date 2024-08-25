@@ -11,8 +11,8 @@ exports.register = async (req, res) => {
     const newUser = new User({ email, password: hashedPassword });
     await newUser.save();
 
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+    const token = jwt.sign({ id: newUser._id, email: email }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
     });
 
     res.status(201).json({ token });
@@ -32,8 +32,8 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Identifiants invalides" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+    const token = jwt.sign({ id: user._id, email: email }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
     });
 
     res.status(200).json({ token });

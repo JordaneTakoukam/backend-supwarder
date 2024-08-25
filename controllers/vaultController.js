@@ -8,8 +8,11 @@ exports.createVault = async (req, res) => {
     const { name } = req.body;
     const userId = req.user.id;
 
-    const existVault = await Vault.find({ name: name });
+    // 
+    const existVault = await Vault.findOne({ name: name });
+
     if (existVault) {
+
       return res
         .status(400)
         .json({ message: "Le nom du trousseau existe déjà" });
@@ -32,9 +35,43 @@ exports.createVault = async (req, res) => {
 };
 
 // Ajouter un membre
+// exports.addMember = async (req, res) => {
+//   try {
+//     const { memberId } = req.body;
+//     const vault = await Vault.findById(req.params.id);
+
+//     if (!vault) {
+//       return res.status(404).json({ message: "Trousseau non trouvé" });
+//     }
+
+//     // Vérifier si l'utilisateur est le propriétaire
+//     if (vault.owner.toString() !== req.user._id.toString()) {
+//       return res.status(401).json({ message: "Autorisation refusée" });
+//     }
+
+//     const permissions = req.body.permissions || "read";
+
+//     if (vault.sharedWith.some((user) => user.user.toString() === memberId)) {
+//       return res
+//         .status(400)
+//         .json({ message: "L'utilisateur a déjà accès à ce trousseau" });
+//     }
+
+//     vault.sharedWith.push({ user: memberId, permissions });
+//     await vault.save();
+
+//     res.status(200).json(vault);
+//   } catch (error) {
+//     console.log("Erreur = ", error);
+
+//     res.status(500).json({ message: "Erreur lors de l'ajout du membre" });
+//   }
+// };
+
+// Ajouter un membre
 exports.addMember = async (req, res) => {
   try {
-    const { memberId } = req.body;
+    const { memberId } = req.body; // Ici, memberId est en fait l'email du membre
     const vault = await Vault.findById(req.params.id);
 
     if (!vault) {
@@ -43,25 +80,33 @@ exports.addMember = async (req, res) => {
 
     // Vérifier si l'utilisateur est le propriétaire
     if (vault.owner.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ msg: "Autorisation refusée" });
+      return res.status(401).json({ message: "Autorisation refusée" });
+    }
+
+    // Rechercher l'utilisateur par email
+    const user = await User.findOne({ email: memberId });
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+
+    // Vérifier si l'utilisateur est déjà dans le trousseau
+    if (vault.sharedWith.some((sharedUser) => sharedUser.user.toString() === user._id.toString())) {
+      return res.status(400).json({ message: "L'utilisateur a déjà accès à ce trousseau" });
     }
 
     const permissions = req.body.permissions || "read";
 
-    if (vault.sharedWith.some((user) => user.user.toString() === memberId)) {
-      return res
-        .status(400)
-        .json({ msg: "L'utilisateur a déjà accès à ce trousseau" });
-    }
-
-    vault.sharedWith.push({ user: memberId, permissions });
+    // Ajouter l'utilisateur à la liste des partages
+    vault.sharedWith.push({ user: user._id, permissions });
     await vault.save();
 
     res.status(200).json(vault);
   } catch (error) {
+    console.error("Erreur =", error);
     res.status(500).json({ message: "Erreur lors de l'ajout du membre" });
   }
 };
+
 
 exports.getVaults = asyncHandler(async (req, res) => {
   const vaults = await Vault.find({ owner: req.user._id }).populate(
@@ -104,7 +149,7 @@ exports.deleteVault = asyncHandler(async (req, res) => {
   if (vault) {
     await Vault.findByIdAndDelete(req.params.id);
     res.json({ message: "Vault removed" });
-    
+
   } else {
     res.status(404);
     throw new Error("Vault not found");
