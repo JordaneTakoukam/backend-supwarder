@@ -3,6 +3,7 @@ const { Schema } = mongoose;
 
 const PasswordSchema = new Schema(
   {
+    date_creation: { type: Date, default: Date.now },
     name: {
       type: String,
       unique: true,

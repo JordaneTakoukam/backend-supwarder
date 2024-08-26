@@ -25,7 +25,7 @@ app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/vaults", vaultRoutes);
 app.use("/api/items", itemRoutes);
-app.use("/api/passward", passwordRoutes);
+app.use("/api/passwords", passwordRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

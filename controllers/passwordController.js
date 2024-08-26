@@ -116,7 +116,56 @@ exports.generatePassword = async (req, res) => {
       owner: req.user.id,
     });
 
-    res.json({ savedPessord });
+    res.json({password});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+// Récupérer tous les mots de passe
+exports.getAllPasswords = async (req, res) => {
+  try {
+    // Récupère tous les mots de passe appartenant à l'utilisateur connecté
+    const passwords = await PasswordSchema.find({ owner: req.user.id });
+    res.json(passwords);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+// Supprimer un mot de passe par ID
+exports.deletePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const password = await PasswordSchema.findById(id);
+
+    if (!password) {
+      return res.status(404).json({ message: 'Mot de passe non trouvé' });
+    }
+
+    // Vérifier si l'utilisateur qui fait la demande est autorisé (propriétaire du mot de passe)
+    if (password.owner.toString() !== req.user.id.toString()) {
+      return res.status(401).json({ message: 'Autorisation refusée' });
+    }
+
+    // Supprimer le mot de passe si l'utilisateur est autorisé
+    await PasswordSchema.findByIdAndDelete(id);
+    res.json({ message: 'Mot de passe supprimé avec succès' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
